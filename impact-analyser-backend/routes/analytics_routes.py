@@ -12,37 +12,50 @@ analytics_bp = Blueprint("analytics", __name__)
 # -----------------------
 # STUDENT IMPACT SCORES
 # -----------------------
-@analytics_bp.route("/student-impact", methods=["GET"])
+from flask import request
+from sqlalchemy import func
+
+@analytics_bp.route("/student-impact-paginated", methods=["GET"])
 @jwt_required()
 @role_required("admin")
+def student_impact_paginated():
 
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 5))
 
-def student_impact():
-
-    students = User.query.filter_by(role="student").all()
+    data = db.session.query(
+        User.id,
+        User.name,
+        func.count(Participation.id).label("events_attended"),
+        func.sum(Participation.hours).label("total_hours")
+    ).join(
+        Participation,
+        User.id == Participation.student_id
+    ).filter(
+        Participation.attended == True,
+        User.role == "student"
+    ).group_by(User.id).paginate(page=page, per_page=per_page, error_out=False)
 
     result = []
 
-    for student in students:
-        participations = Participation.query.filter_by(
-            student_id=student.id,
-            attended=True
-        ).all()
-
-        total_hours = sum(p.hours for p in participations)
-        total_events = len(participations)
-
-        impact_score = (total_hours * 2) + (total_events * 5)
+    for student_id, name, events_attended, total_hours in data.items:
+        impact_score = (total_hours * 2) + (events_attended * 5)
 
         result.append({
-            "student_id": student.id,
-            "name": student.name,
+            "student_id": student_id,
+            "name": name,
+            "events_attended": events_attended,
             "total_hours": total_hours,
-            "events_attended": total_events,
             "impact_score": impact_score
         })
 
-    return jsonify(result), 200
+    return jsonify({
+        "page": page,
+        "per_page": per_page,
+        "total_records": data.total,
+        "total_pages": data.pages,
+        "students": result
+    }), 200
 
 # -----------------------
 # TOP 3 STUDENTS
