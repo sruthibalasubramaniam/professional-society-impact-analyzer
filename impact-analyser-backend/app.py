@@ -19,6 +19,7 @@ def create_app():
     from models.society import Society
     from models.event import Event
     from models.participation import Participation
+    
 
 
 
@@ -27,7 +28,9 @@ def create_app():
     from routes.society_routes import society_bp
     from routes.event_routes import event_bp
     from routes.participation_routes import participation_bp
-    
+    from routes.analytics_routes import analytics_bp
+
+
 
     
 
@@ -37,7 +40,7 @@ def create_app():
     app.register_blueprint(society_bp, url_prefix="/api/societies")
     app.register_blueprint(event_bp, url_prefix="/api/events")
     app.register_blueprint(participation_bp, url_prefix="/api/participation")
-
+    app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
 
 
     return app
