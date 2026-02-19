@@ -114,3 +114,48 @@ def society_impact():
 
     return jsonify(result), 200
 
+# -----------------------
+# DASHBOARD SUMMARY
+# -----------------------
+@analytics_bp.route("/dashboard-summary", methods=["GET"])
+@jwt_required()
+def dashboard_summary():
+
+    from models.society import Society
+    from models.event import Event
+
+    total_students = User.query.filter_by(role="student").count()
+    total_societies = Society.query.count()
+    total_events = Event.query.count()
+    total_participations = Participation.query.filter_by(attended=True).count()
+
+    # Get top student
+    students = User.query.filter_by(role="student").all()
+
+    top_student = None
+    max_score = 0
+
+    for student in students:
+        participations = Participation.query.filter_by(
+            student_id=student.id,
+            attended=True
+        ).all()
+
+        total_hours = sum(p.hours for p in participations)
+        total_events_attended = len(participations)
+
+        score = (total_hours * 2) + (total_events_attended * 5)
+
+        if score > max_score:
+            max_score = score
+            top_student = student.name
+
+    return jsonify({
+        "total_students": total_students,
+        "total_societies": total_societies,
+        "total_events": total_events,
+        "total_attended_participations": total_participations,
+        "top_student": top_student,
+        "top_student_score": max_score
+    }), 200
+
