@@ -3,6 +3,8 @@ from flask_jwt_extended import jwt_required
 from extensions import db
 from models.participation import Participation
 from models.user import User
+from utils.role_required import role_required
+
 
 analytics_bp = Blueprint("analytics", __name__)
 
@@ -12,6 +14,9 @@ analytics_bp = Blueprint("analytics", __name__)
 # -----------------------
 @analytics_bp.route("/student-impact", methods=["GET"])
 @jwt_required()
+@role_required("admin")
+
+
 def student_impact():
 
     students = User.query.filter_by(role="student").all()
@@ -44,6 +49,8 @@ def student_impact():
 # -----------------------
 @analytics_bp.route("/top-students", methods=["GET"])
 @jwt_required()
+@role_required("admin")
+
 def top_students():
 
     students = User.query.filter_by(role="student").all()
@@ -76,6 +83,8 @@ def top_students():
 # -----------------------
 @analytics_bp.route("/society-impact", methods=["GET"])
 @jwt_required()
+@role_required("admin")
+
 def society_impact():
 
     from models.society import Society
@@ -119,6 +128,8 @@ def society_impact():
 # -----------------------
 @analytics_bp.route("/dashboard-summary", methods=["GET"])
 @jwt_required()
+@role_required("admin")
+
 def dashboard_summary():
 
     from models.society import Society
